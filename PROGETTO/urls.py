@@ -33,5 +33,7 @@ urlpatterns = [
     path('ristoratore/login/', views.ristoratore_login, name='ristoratore_login'),
     path('gestione_ordine/', views.gestione_ordine, name='gestione_ordine'),  # Nuovo percorso per la gestione ordini
     path('update_order_status/<int:order_id>/', views.update_order_status, name='update_order_status'),
+    path('coupon/', views.coupon_page, name='coupon_page'),
+    path('apply_coupon/', views.apply_coupon, name='apply_coupon'),
 ]
 

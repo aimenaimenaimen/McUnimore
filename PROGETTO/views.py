@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from django.contrib import messages
-from gestione.models import User, Cart, Product, CartItem, Order, FastFood  # Usa un'importazione assoluta
+from gestione.models import User, Cart, Product, CartItem, Order, FastFood, Coupon  # Usa un'importazione assoluta
 import pytz
+import random
 
 def homepage(request):
     return render(request, 'homepage.html')
@@ -202,3 +203,25 @@ def update_order_status(request, order_id):
         order.status = status
         order.save()
         return redirect('gestione_ordine')  # Reindirizza alla pagina di gestione ordini
+
+def coupon_page(request):
+    if not request.user.is_authenticated:
+        return redirect('login')  # Reindirizza alla pagina di login se non loggato
+
+    # Seleziona 5 coupon casuali attivi
+    coupons = list(Coupon.objects.filter(is_active=True))
+    random_coupons = random.sample(coupons, min(len(coupons), 5))
+
+    context = {
+        'coupons': random_coupons,
+    }
+    return render(request, 'coupon_page.html', context)
+
+def apply_coupon(request):
+    if request.method == 'POST':
+        coupon_code = request.POST.get('coupon_code')
+        coupon = get_object_or_404(Coupon, code=coupon_code, is_active=True)
+        cart = Cart.objects.get(user=request.user)
+        cart.coupon = coupon
+        cart.save()
+        return redirect('cart')  # Reindirizza al carrello

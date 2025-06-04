@@ -1,0 +1,49 @@
+<!-- filepath: /Users/aimen/Desktop/Prog_Tech_Web/templates/coupon_page.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Coupon</title>
+    <style>
+        .coupon-container {
+            text-align: center;
+            margin-top: 50px;
+        }
+        .coupon-code {
+            font-size: 1.5em;
+            color: #ff9800;
+            margin-top: 20px;
+        }
+        .reveal-button {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .reveal-button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="coupon-container">
+        <h1>Scopri i tuoi Coupon</h1>
+        {% for coupon in coupons %}
+            <div>
+                <button class="reveal-button" onclick="revealCoupon(this, '{{ coupon.code }}')">Rivela Coupon</button>
+                <p class="coupon-code" style="display: none;">{{ coupon.code }}</p>
+            </div>
+        {% endfor %}
+    </div>
+    <script>
+        function revealCoupon(button, code) {
+            button.style.display = 'none';
+            const couponCode = button.nextElementSibling;
+            couponCode.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -1,3 +1,5 @@
+import random
+import string
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.conf import settings
@@ -20,9 +22,21 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+class Coupon(models.Model):
+    code = models.CharField(max_length=8, unique=True)
+    discount = models.DecimalField(max_digits=5, decimal_places=2)  # Sconto in percentuale
+    is_active = models.BooleanField(default=True)
 
+    @staticmethod
+    def generate_random_code():
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+    def __str__(self):
+        return self.code
+    
 class Cart(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    coupon = models.ForeignKey(Coupon, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return f"Carrello di {self.user.username}"
