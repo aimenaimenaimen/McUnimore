@@ -164,7 +164,19 @@ def gestione_ordine(request):
     selected_fast_food = request.GET.get('fast_food')  # Recupera il fast-food selezionato
     orders = Order.objects.filter(fast_food_id=selected_fast_food) if selected_fast_food else []
 
-    return render(request, 'gestione_ordine.html', {'fast_foods': fast_foods, 'orders': orders})
+    fast_food_id = request.GET.get('fast_food')  # Ottieni l'ID del fast food selezionato
+    fast_food_name = None
+
+    if fast_food_id:
+        fast_food = next((ff for ff in fast_foods if ff.id == int(fast_food_id)), None)
+        fast_food_name = fast_food.name if fast_food else None
+
+    context = {
+        'fast_foods': fast_foods,  # Lista di fast food
+        'orders': orders,          # Lista di ordini
+        'selected_fast_food': fast_food_name,  # Nome del fast food selezionato
+    }
+    return render(request, 'gestione_ordine.html', context)
 
 def ristoratore_login(request):
     if request.method == 'POST':

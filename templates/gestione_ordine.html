@@ -172,6 +172,9 @@
     {% else %}
         <p style="text-align: center; color: #ff9800;">Nessun ordine trovato.</p>
     {% endif %}
+    <p style="text-align: center; color: #333; font-size: 1.5em; margin-top: 20px;">
+        STAI VISUALIZZANDO GLI ORDINI "{{ selected_fast_food }}"
+    </p>
     <div class="popup" id="popup">
         <p id="popup-message">Stato dell'ordine aggiornato con successo!</p>
         <button onclick="closePopup()">Chiudi</button>
