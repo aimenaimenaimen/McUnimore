@@ -1,49 +1,38 @@
-<!-- filepath: /Users/aimen/Desktop/Prog_Tech_Web/templates/coupon_page.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Coupon</title>
-    <style>
-        .coupon-container {
-            text-align: center;
-            margin-top: 50px;
-        }
-        .coupon-code {
-            font-size: 1.5em;
-            color: #ff9800;
-            margin-top: 20px;
-        }
-        .reveal-button {
-            background-color: #ff9800;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 1em;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .reveal-button:disabled {
-            background-color: #ddd;
-            cursor: not-allowed;
-        }
-    </style>
-</head>
-<body>
-    <div class="coupon-container">
-        <h1>Scopri i tuoi Coupon</h1>
-        {% for coupon in coupons %}
-            <div>
-                <button class="reveal-button" onclick="revealCoupon(this, '{{ coupon.code }}')">Rivela Coupon</button>
-                <p class="coupon-code" style="display: none;">{{ coupon.code }}</p>
-            </div>
-        {% endfor %}
-    </div>
-    <script>
-        function revealCoupon(button, code) {
-            button.style.display = 'none';
-            const couponCode = button.nextElementSibling;
-            couponCode.style.display = 'block';
-        }
-    </script>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block title %}Sezione Coupon{% endblock %}
+
+{% block content %}
+<h1 style="text-align: center; color: #ff9800;">Scopri i tuoi Coupon</h1>
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px;">
+    {% for coupon in coupons %}
+        <div style="border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); width: 250px; padding: 20px; background-color: #fff3e0; text-align: center;">
+            <p style="font-size: 1.2em; font-weight: bold;">Sconto: {{ coupon.discount }}%</p>
+            <p style="font-size: 1em; color: #333;">{{ coupon.description }}</p>
+            {% if coupon in revealed_coupons %}
+                <p class="coupon-code" style="font-size: 1.5em; color: #ff9800; margin-top: 10px;">Codice: {{ coupon.code }}</p>
+            {% else %}
+                <button class="reveal-button" onclick="revealCoupon(this, '{{ coupon.code }}', {{ coupon.id }})" style="background-color: #ff9800; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px;">Rivela Coupon</button>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+<script>
+    function revealCoupon(button, code, couponId) {
+        button.style.display = 'none';
+        fetch(`/reveal_coupon/${couponId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+        }).then(() => {
+            const couponCode = document.createElement('p');
+            couponCode.textContent = `Codice: ${code}`;
+            couponCode.style.fontSize = '1.5em';
+            couponCode.style.color = '#ff9800';
+            couponCode.style.marginTop = '10px';
+            button.parentNode.appendChild(couponCode);
+        });
+    }
+</script>
+{% endblock %}

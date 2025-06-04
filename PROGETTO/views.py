@@ -1,10 +1,13 @@
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from gestione.models import User, Cart, Product, CartItem, Order, FastFood, Coupon  # Usa un'importazione assoluta
+from gestione.models import Product, Cart, CartItem
+from gestione.models import User, Order, FastFood, Coupon  # Usa un'importazione assoluta
 import pytz
 import random
+from django.views.decorators.csrf import csrf_exempt
 
 def homepage(request):
     return render(request, 'homepage.html')
@@ -34,11 +37,12 @@ def login_view(request):
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
 
-        if user:
+        if user is not None:
             login(request, user)
-            return redirect('homepage')  # Reindirizza alla homepage dopo il login
+            next_url = request.GET.get('next', 'homepage')  # Reindirizza alla pagina richiesta o alla homepage
+            return redirect(next_url)
         else:
-            return render(request, 'login.html', {'error': 'Credenziali non valide.'})
+            return render(request, 'login.html', {'error': 'Credenziali non valide'})
 
     return render(request, 'login.html')
 
@@ -50,98 +54,89 @@ def cart_view(request):
     if not request.user.is_authenticated:
         return redirect('login')  # Reindirizza al login se non autenticato
 
-    cart, created = Cart.objects.get_or_create(user=request.user)
-    cart_items = cart.cartitem_set.all()
-    total_price = sum(item.quantity * item.product.price for item in cart_items)  # Calcola il prezzo totale
-    fast_foods = FastFood.objects.all()  # Recupera tutti i fast-food dal database
+    cart = Cart.objects.get(user=request.user)
+    cart_items = CartItem.objects.filter(cart=cart)
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
 
-    if request.method == 'POST' and 'place_order' in request.POST:
-        tipo_di_ordine = request.POST.get('tipo_di_ordine', 'DELIVERY')
-        if tipo_di_ordine == 'DELIVERY':
-            delivery_address = request.POST.get('delivery_address')
-            delivery_city = request.POST.get('delivery_city')
-
-            # Validazione lato server
-            if not delivery_address or not delivery_city:
-                messages.error(request, 'Per gli ordini Delivery, i campi Indirizzo e Città sono obbligatori.')
-                return render(request, 'cart.html', {'cart_items': cart_items, 'total_price': total_price, 'fast_foods': fast_foods})
-
-            delivery_fast_food_id = request.POST.get('delivery_fast_food')
-            delivery_fast_food = FastFood.objects.get(id=delivery_fast_food_id)
-            items_details = "\n".join([f"{item.product.name} x {item.quantity}" for item in cart_items])
-            Order.objects.create(
-                user=request.user,
-                total_price=total_price,
-                items=items_details,
-                tipo_di_ordine=tipo_di_ordine,
-                delivery_address=delivery_address,
-                delivery_city=delivery_city,
-                fast_food=delivery_fast_food,
-                status='ORDINE RICEVUTO'
-            )
-        elif tipo_di_ordine == 'IN LOCO':
-            fast_food_id = request.POST.get('fast_food')
-            fast_food = FastFood.objects.get(id=fast_food_id)
-            items_details = "\n".join([f"{item.product.name} x {item.quantity}" for item in cart_items])
-            Order.objects.create(
-                user=request.user,
-                total_price=total_price,
-                items=items_details,
-                tipo_di_ordine=tipo_di_ordine,
-                fast_food=fast_food,
-                status='ORDINE RICEVUTO'
-            )
-        cart_items.delete()  # Svuota il carrello
-        return redirect('orders')  # Reindirizza alla pagina degli ordini
-
-    return render(request, 'cart.html', {'cart_items': cart_items, 'total_price': total_price, 'fast_foods': fast_foods})
-
-def prodotti_view(request):
-    products = Product.objects.all()
+    if cart.coupon:
+        discount = (total_price * cart.coupon.discount) / 100
+        total_price -= discount
 
     if request.method == 'POST':
+        order_type = request.POST.get('order_type')
+        fast_food_id = request.POST.get('fast_food')
+        address = request.POST.get('address')
+        city = request.POST.get('city')
+
+        # Validazione
+        if order_type == 'delivery' and (not address or not city):
+            messages.error(request, "Indirizzo e città sono obbligatori per la consegna.")
+            return redirect('cart')
+
+        fast_food = FastFood.objects.get(id=fast_food_id) if fast_food_id else None
+
+        # Creazione ordine
+        order = Order.objects.create(
+            user=request.user,
+            cart=cart,
+            order_type=order_type,
+            fast_food=fast_food,
+            address=address,
+            city=city,
+            total_price=total_price
+        )
+        messages.success(request, "Ordine effettuato con successo!")
+        return redirect('orders')
+
+    fast_foods = FastFood.objects.all()
+    context = {
+        'cart_items': cart_items,
+        'total_price': total_price,
+        'fast_foods': fast_foods,
+    }
+    return render(request, 'cart.html', context)
+
+@login_required
+def prodotti_view(request):
+    products = Product.objects.all()
+    if request.method == 'POST':
         product_id = request.POST.get('product_id')
-        product = Product.objects.get(id=product_id)
-
-        # Recupera o crea il carrello per l'utente
+        product = get_object_or_404(Product, id=product_id)
         cart, created = Cart.objects.get_or_create(user=request.user)
-        cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-
-        if created:
-            cart_item.quantity = 1  # Imposta la quantità iniziale a 1
-        else:
-            cart_item.quantity += 1  # Incrementa la quantità se l'elemento esiste già
-
-        cart_item.save()
-
-        # Passa il messaggio al template
-        return render(request, 'prodotti.html', {'products': products, 'message': 'Prodotto aggiunto al carrello correttamente!'})
-
+        # Aggiungi il prodotto al carrello (puoi usare una relazione ManyToMany o un altro modello)
+        cart.total_price += product.price  # Aggiorna il prezzo totale
+        cart.save()
+        return redirect('prodotti')  # Ricarica la pagina dei prodotti
     return render(request, 'prodotti.html', {'products': products})
 
+@login_required
 def add_to_cart(request, product_id):
-    if not request.user.is_authenticated:
-        return redirect('login')  # Reindirizza al login se non autenticato
+    product = get_object_or_404(Product, id=product_id)
+    cart, created = Cart.objects.get_or_create(user=request.user)
 
-    try:
-        product = Product.objects.get(id=product_id)
-        cart, created = Cart.objects.get_or_create(user=request.user)
-        cart_item, created = CartItem.objects.get_or_create(cart=cart, item=product)
-        cart_item.quantity += 1
-        cart_item.save()
+    # Controlla se il prodotto è già nel carrello
+    cart_item, item_created = CartItem.objects.get_or_create(cart=cart, product=product)
+    if not item_created:
+        cart_item.quantity += 1  # Incrementa la quantità se il prodotto è già presente
+    cart_item.save()
 
-        return redirect('cart')  # Reindirizza al carrello dopo l'aggiunta
-    except Product.DoesNotExist:
-        return redirect('prodotti')  # Reindirizza alla pagina dei prodotti se il prodotto non esiste
+    # Aggiorna il prezzo totale del carrello
+    cart.total_price += product.price
+    cart.save()
 
+    # Aggiungi un messaggio di conferma
+    messages.success(request, f"Il prodotto '{product.name}' è stato aggiunto al carrello!")
+
+    return redirect('prodotti')  # Reindirizza alla pagina dei prodotti
+
+@login_required
 def remove_from_cart(request, cart_item_id):
-    if not request.user.is_authenticated:
-        return redirect('login')  # Reindirizza al login se non autenticato
-
     cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
-    cart_item.delete()  # Rimuove l'elemento dal carrello
-
-    return redirect('cart')  # Reindirizza al carrello
+    cart_item.cart.total_price -= cart_item.product.price * cart_item.quantity
+    cart_item.cart.save()
+    cart_item.delete()
+    messages.success(request, f"Il prodotto '{cart_item.product.name}' è stato rimosso dal carrello.")
+    return redirect('cart')
 
 def orders_view(request):
     if not request.user.is_authenticated:
@@ -204,16 +199,18 @@ def update_order_status(request, order_id):
         order.save()
         return redirect('gestione_ordine')  # Reindirizza alla pagina di gestione ordini
 
+@login_required
 def coupon_page(request):
-    if not request.user.is_authenticated:
-        return redirect('login')  # Reindirizza alla pagina di login se non loggato
-
     # Seleziona 5 coupon casuali attivi
     coupons = list(Coupon.objects.filter(is_active=True))
     random_coupons = random.sample(coupons, min(len(coupons), 5))
 
+    # Aggiungi informazione sui coupon rivelati dall'utente
+    revealed_coupons = request.user.revealed_coupons.all()
+
     context = {
         'coupons': random_coupons,
+        'revealed_coupons': revealed_coupons,
     }
     return render(request, 'coupon_page.html', context)
 
@@ -225,3 +222,12 @@ def apply_coupon(request):
         cart.coupon = coupon
         cart.save()
         return redirect('cart')  # Reindirizza al carrello
+
+@csrf_exempt
+@login_required
+def reveal_coupon(request, coupon_id):
+    if request.method == 'POST':
+        coupon = Coupon.objects.get(id=coupon_id)
+        coupon.revealed_by.add(request.user)
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=400)

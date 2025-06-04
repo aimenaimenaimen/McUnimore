@@ -1,4 +1,4 @@
-<!-- filepath: /Users/aimen/Documents/terzo_anno/Tecnologie Web/django_new/PROGETTO/templates/homepage.html -->
+<!-- filepath: /Users/aimen/Desktop/Prog_Tech_Web/templates/homepage.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -83,6 +83,7 @@
                         <a href="{% url 'login' %}">Ordini (Login richiesto)</a>
                     {% endif %}
                 </li>
+                <li><a href="{% url 'coupon_page' %}">Coupon</a></li>
                 <li><a href="#">Chi siamo</a></li>
                 <li><a href="#">Contatti</a></li>
                 <li><a href="{% url 'ristoratore_login' %}">Ristoratore</a></li> <!-- Aggiunta voce Ristoratore -->

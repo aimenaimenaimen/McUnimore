@@ -1,22 +1,28 @@
-<!-- filepath: /Users/aimen/Documents/terzo_anno/Tecnologie Web/django_new/PROGETTO/templates/prodotti.html -->
+<!-- filepath: /Users/aimen/Desktop/Prog_Tech_Web/templates/prodotti.html -->
 {% extends 'base.html' %}
-{% load static %} <!-- Carica il tag static -->
+{% load static %}
 
 {% block title %}Prodotti{% endblock %}
 
 {% block content %}
 <h1 style="text-align: center; color: #ff9800;">Prodotti Disponibili</h1>
+
+<!-- Mostra i messaggi -->
+{% if messages %}
+    <div style="color: green; font-weight: bold; margin-bottom: 20px; text-align: center;">
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+{% endif %}
+
 <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px;">
     {% for product in products %}
         <div style="border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); width: 250px; padding: 20px; background-color: #fff3e0; text-align: center;">
             <img src="{% static 'images/' %}{{ product.image_name }}" alt="{{ product.name }}" style="width: 100%; border-radius: 10px; margin-bottom: 10px;">
             <h2 style="color: #ff9800;">{{ product.name }}</h2>
             <p style="font-size: 1.2em; font-weight: bold;">€{{ product.price }}</p>
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="product_id" value="{{ product.id }}">
-                <button type="submit" style="background-color: #ff9800; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px;">Aggiungi al Carrello</button>
-            </form>
+            <a href="{% url 'add_to_cart' product.id %}" style="background-color: #ff9800; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px; text-decoration: none;">Aggiungi al Carrello</a>
         </div>
     {% endfor %}
 </div>

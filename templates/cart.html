@@ -1,96 +1,14 @@
-<!-- filepath: /Users/aimen/Documents/terzo_anno/Tecnologie Web/django_new/PROGETTO/templates/cart.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carrello</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #fff8e1; /* Bianco con sfumatura arancione */
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-        .navbar {
-            background-color: #ff9800; /* Arancione */
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-        }
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            margin: 0 15px;
-            font-weight: bold;
-        }
-        .navbar a:hover {
-            text-decoration: underline;
-        }
-        h1 {
-            text-align: center;
-            color: #ff9800; /* Arancione */
-            margin-top: 20px;
-        }
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background-color: #ffffff; /* Bianco */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #ff9800; /* Arancione */
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #fff3e0; /* Sfumatura arancione */
-        }
-        tr:hover {
-            background-color: #ffe0b2; /* Colore più chiaro al passaggio del mouse */
-        }
-        .total-price {
-            text-align: right;
-            margin: 20px auto;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #ff9800; /* Arancione */
-            width: 80%;
-        }
-        button {
-            background-color: #ff9800; /* Arancione */
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #e68900; /* Colore arancione più scuro al passaggio del mouse */
-        }
-    </style>
-</head>
-<body>
-    <!-- Menu in alto -->
-    <div class="navbar">
-        <a href="{% url 'homepage' %}">Homepage</a>
-        <a href="{% url 'prodotti' %}">Prodotti</a>
-        <a href="{% url 'cart' %}">Carrello</a>
-        <a href="{% url 'orders' %}">Ordini</a> <!-- Link alla pagina degli ordini -->
-    </div>
+<!-- filepath: /Users/aimen/Desktop/Prog_Tech_Web/templates/cart.html -->
+{% extends 'base.html' %}
 
-    <h1>Carrello di {{ user.username }}</h1>
+{% block title %}Carrello{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="text-align: center; color: #ff9800;">Carrello di {{ user.username }}</h1>
 
     {% if messages %}
-        <div style="color: red; font-weight: bold; margin-bottom: 20px;">
+        <div style="color: green; font-weight: bold; margin-bottom: 20px; text-align: center;">
             {% for message in messages %}
                 <p>{{ message }}</p>
             {% endfor %}
@@ -98,112 +16,81 @@
     {% endif %}
 
     {% if cart_items %}
-        <table>
+        <table style="width: 100%; margin: 20px auto; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
             <thead>
-                <tr>
-                    <th>Nome del Prodotto</th>
-                    <th>Quantità</th>
-                    <th>Prezzo Unitario</th>
-                    <th>Prezzo Parziale</th>
+                <tr style="background-color: #ff9800; color: white;">
+                    <th style="padding: 10px; text-align: left;">Nome del Prodotto</th>
+                    <th style="padding: 10px; text-align: left;">Quantità</th>
+                    <th style="padding: 10px; text-align: left;">Prezzo Unitario</th>
+                    <th style="padding: 10px; text-align: left;">Azione</th>
                 </tr>
             </thead>
             <tbody>
                 {% for cart_item in cart_items %}
                     <tr>
-                        <td>{{ cart_item.product.name }}</td>
-                        <td>{{ cart_item.quantity }}</td>
-                        <td>€{{ cart_item.product.price }}</td>
-                        <td>€{{ cart_item.partial_price|floatformat:2 }}</td> <!-- Usa il valore calcolato nella vista -->
+                        <td style="padding: 10px; border: 1px solid #ddd;">{{ cart_item.product.name }}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">{{ cart_item.quantity }}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">€{{ cart_item.product.price }}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">
+                            <form method="post" action="{% url 'remove_from_cart' cart_item.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" style="background-color: #e53935; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Rimuovi</button>
+                            </form>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-        <div class="total-price">
+        <div style="text-align: right; margin: 20px auto; font-size: 1.5em; font-weight: bold; color: #ff9800;">
             Prezzo Totale: €{{ total_price }}
         </div>
-        <form method="post">
-            {% csrf_token %}
-            <div style="margin-bottom: 20px;">
-                <label for="tipo_di_ordine" style="font-weight: bold;">Tipo di Ordine:</label>
-                <select id="tipo_di_ordine" name="tipo_di_ordine" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd;" onchange="toggleOrderOptions(this.value)">
-                    <option value="DELIVERY">Delivery</option>
-                    <option value="IN LOCO">In Loco</option>
-                </select>
-            </div>
-            <div id="delivery-options" style="display: none; margin-bottom: 20px;">
-                <label for="delivery_address" style="font-weight: bold;">Indirizzo di Consegna:</label>
-                <input type="text" id="delivery_address" name="delivery_address" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
-                <label for="delivery_city" style="font-weight: bold;">Città:</label>
-                <input type="text" id="delivery_city" name="delivery_city" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
-                <label for="delivery_fast_food" style="font-weight: bold;">Scegli un fast-food per la consegna:</label>
-                <select id="delivery_fast_food" name="delivery_fast_food" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
-                    {% for fast_food in fast_foods %}
-                        <option value="{{ fast_food.id }}">{{ fast_food.name }} - {{ fast_food.address }}, {{ fast_food.city }} ({{ fast_food.postal_code }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div id="fast-food-options" style="display: none; margin-bottom: 20px;">
-                <label for="fast_food" style="font-weight: bold;">Scegli un fast-food:</label>
-                <select id="fast_food" name="fast_food" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
-                    {% for fast_food in fast_foods %}
-                        <option value="{{ fast_food.id }}">{{ fast_food.name }} - {{ fast_food.address }}, {{ fast_food.city }} ({{ fast_food.postal_code }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" name="place_order" style="background-color: #ff9800; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px; margin-top: 20px;">Effettua Ordine</button>
-        </form>
 
-        <form method="post" action="{% url 'apply_coupon' %}">
+        <form method="post" style="margin: 20px auto; padding: 20px; background-color: #fff3e0; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
             {% csrf_token %}
-            <label for="coupon_code">Inserisci il codice coupon:</label>
-            <input type="text" id="coupon_code" name="coupon_code" required>
-            <button type="submit">Applica</button>
+            <h3 style="color: #ff9800;">Tipo di Ordine</h3>
+            <label>
+                <input type="radio" name="order_type" value="delivery" required> Delivery
+            </label>
+            <label>
+                <input type="radio" name="order_type" value="in_loco" required> In Loco
+            </label>
+
+            <div id="delivery-fields" style="display: none; margin-top: 10px;">
+                <label>Indirizzo:</label>
+                <input type="text" name="address" placeholder="Inserisci l'indirizzo" style="width: 100%; padding: 10px; margin-top: 5px;">
+                <label>Città:</label>
+                <input type="text" name="city" placeholder="Inserisci la città" style="width: 100%; padding: 10px; margin-top: 5px;">
+            </div>
+
+            <div id="in-loco-fields" style="display: none; margin-top: 10px;">
+                <label>Seleziona il Fast Food:</label>
+                <select name="fast_food" style="width: 100%; padding: 10px; margin-top: 5px;">
+                    <option value="">-- Seleziona --</option>
+                    {% for fast_food in fast_foods %}
+                        <option value="{{ fast_food.id }}">{{ fast_food.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <h3 style="color: #ff9800; margin-top: 20px;">Inserisci il Coupon</h3>
+            <input type="text" name="coupon_code" placeholder="Codice Coupon" style="width: 100%; padding: 10px; margin-top: 5px;">
+            <button type="submit" formaction="{% url 'apply_coupon' %}" style="background-color: #ff9800; color: white; padding: 10px 15px; border: none; border-radius: 5px; margin-top: 10px;">Applica Coupon</button>
+
+            <button type="submit" style="background-color: #4caf50; color: white; padding: 10px 15px; border: none; border-radius: 5px; margin-top: 20px;">Effettua Ordine</button>
         </form>
     {% else %}
         <div style="text-align: center; margin-top: 20px; color: #ff9800; font-size: 1.5em; font-weight: bold;">
             Il carrello è vuoto.
         </div>
     {% endif %}
-    <script>
-        // Funzione per gestire la visualizzazione delle opzioni in base al tipo di ordine
-        function toggleOrderOptions(value) {
-            const deliveryOptions = document.getElementById('delivery-options');
-            const fastFoodOptions = document.getElementById('fast-food-options');
-            if (value === 'DELIVERY') {
-                deliveryOptions.style.display = 'block';
-                fastFoodOptions.style.display = 'none';
-            } else if (value === 'IN LOCO') {
-                deliveryOptions.style.display = 'none';
-                fastFoodOptions.style.display = 'block';
-            } else {
-                deliveryOptions.style.display = 'none';
-                fastFoodOptions.style.display = 'none';
-            }
-        }
+</div>
 
-        // Imposta l'opzione "Delivery" come predefinita e mostra i campi corrispondenti
-        document.addEventListener('DOMContentLoaded', function () {
-            const tipoDiOrdineSelect = document.getElementById('tipo_di_ordine');
-            tipoDiOrdineSelect.value = 'DELIVERY'; // Imposta "Delivery" come opzione predefinita
-            toggleOrderOptions(tipoDiOrdineSelect.value); // Mostra i campi corrispondenti
+<script>
+    document.querySelectorAll('input[name="order_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('delivery-fields').style.display = this.value === 'delivery' ? 'block' : 'none';
+            document.getElementById('in-loco-fields').style.display = this.value === 'in_loco' ? 'block' : 'none';
         });
-
-        function validateForm(event) {
-            const tipoDiOrdine = document.getElementById('tipo_di_ordine').value;
-            if (tipoDiOrdine === 'DELIVERY') {
-                const deliveryAddress = document.getElementById('delivery_address').value.trim();
-                const deliveryCity = document.getElementById('delivery_city').value.trim();
-
-                if (!deliveryAddress || !deliveryCity) {
-                    alert('Per gli ordini Delivery, i campi Indirizzo e Città sono obbligatori.');
-                    event.preventDefault(); // Impedisce l'invio del form
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        document.querySelector('form').addEventListener('submit', validateForm);
-    </script>
-</body>
-</html>
+    });
+</script>
+{% endblock %}

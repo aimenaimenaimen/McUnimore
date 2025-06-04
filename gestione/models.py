@@ -1,7 +1,7 @@
 import random
 import string
 from django.db import models
-from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.contrib.auth.models import AbstractUser, Group, Permission, User
 from django.conf import settings
 
 
@@ -24,12 +24,15 @@ class Product(models.Model):
 
 class Coupon(models.Model):
     code = models.CharField(max_length=8, unique=True)
-    discount = models.DecimalField(max_digits=5, decimal_places=2)  # Sconto in percentuale
+    discount = models.IntegerField()  # Percentuale di sconto come numero intero
+    description = models.TextField(blank=True, null=True)  # Descrizione del coupon
     is_active = models.BooleanField(default=True)
+    revealed_by = models.ManyToManyField(User, related_name='revealed_coupons', blank=True)
 
     @staticmethod
     def generate_random_code():
-        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        import random
+        return ''.join(random.choices('0123456789', k=8))  # Genera un codice di 8 cifre numeriche
 
     def __str__(self):
         return self.code
@@ -37,6 +40,14 @@ class Coupon(models.Model):
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     coupon = models.ForeignKey(Coupon, null=True, blank=True, on_delete=models.SET_NULL)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    products = models.ManyToManyField(Product, blank=True)  # Relazione ManyToMany con i prodotti
+
+    def calculate_discounted_price(self):
+        if self.coupon:
+            discount = (self.total_price * self.coupon.discount) / 100
+            return self.total_price - discount
+        return self.total_price
 
     def __str__(self):
         return f"Carrello di {self.user.username}"

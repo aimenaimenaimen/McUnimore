@@ -1,4 +1,4 @@
-<!-- filepath: /Users/aimen/Documents/terzo_anno/Tecnologie Web/django_new/PROGETTO/templates/base.html -->
+<!-- filepath: /Users/aimen/Desktop/Prog_Tech_Web/templates/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,14 +28,43 @@
         .navbar a:hover {
             text-decoration: underline;
         }
+        .navbar .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .navbar button {
+            background-color: #e64a19;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .navbar button:hover {
+            background-color: #d84315;
+        }
     </style>
 </head>
 <body>
     <div class="navbar">
-        <a href="{% url 'homepage' %}">Homepage</a>
-        <a href="{% url 'prodotti' %}">Prodotti</a>
-        <a href="{% url 'cart' %}">Carrello</a>
-        <a href="{% url 'orders' %}">Ordini</a>
+        <div>
+            <a href="{% url 'homepage' %}">Homepage</a>
+            <a href="{% url 'prodotti' %}">Prodotti</a>
+            <a href="{% url 'cart' %}">Carrello</a>
+            <a href="{% url 'orders' %}">Ordini</a>
+            <a href="{% url 'coupon_page' %}">Coupon</a>
+        </div>
+        <div class="auth-buttons">
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <button onclick="window.location.href='{% url 'login' %}'">Login</button>
+                <button onclick="window.location.href='{% url 'register' %}'">Registrati</button>
+            {% endif %}
+        </div>
     </div>
     <div>
         {% block content %}{% endblock %}
