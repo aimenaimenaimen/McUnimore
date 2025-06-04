@@ -1,0 +1,195 @@
+<!-- filepath: /Users/aimen/Documents/terzo_anno/Tecnologie Web/django_new/PROGETTO/templates/gestione_ordine.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Gestione Ordini</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff8e1;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #ff9800;
+            text-align: center;
+        }
+        select, table {
+            width: 100%;
+            margin: 20px 0;
+        }
+        table {
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #ff9800;
+            color: white;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .popup button {
+            margin-top: 10px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #ff9800;
+            color: white;
+        }
+        header h1 {
+            margin: 0;
+        }
+        .logout-button {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            background-color: #e64a19;
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Gestione Ordini</h1>
+        <form method="post" action="{% url 'logout' %}?next={% url 'ristoratore_login' %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="logout-button">Logout</button>
+        </form>
+    </header>
+    <p style="text-align: center; color: #333; font-size: 1.2em; margin-top: 10px;">
+        Sei loggato come: <strong>{{ user.username }}</strong>
+    </p>
+    <form method="get">
+        <label for="fast_food">Seleziona il Fast-Food:</label>
+        <select id="fast_food" name="fast_food">
+            {% for fast_food in fast_foods %}
+                <option value="{{ fast_food.id }}">{{ fast_food.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Visualizza Ordini</button>
+    </form>
+    {% if orders %}
+        <h2>Ordini In Loco</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Dettagli</th>
+                    <th>Prezzo Totale</th>
+                    <th>Stato</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                    {% if order.tipo_di_ordine == "IN LOCO" %}
+                        <tr>
+                            <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                            <td>{{ order.items }}</td>
+                            <td>€{{ order.total_price }}</td>
+                            <td>{{ order.status }}</td>
+                            <td>
+                                <form method="post" action="{% url 'update_order_status' order.id %}" onsubmit="showPopup(event)">
+                                    {% csrf_token %}
+                                    <select name="status" id="status-select-{{ order.id }}">
+                                        <option value="ORDINE RICEVUTO">Ordine Ricevuto</option>
+                                        <option value="IN PREPARAZIONE">In Preparazione</option>
+                                        <option value="IN CONSEGNA">In Consegna</option>
+                                        <option value="CONSEGNATO">Consegnato</option>
+                                    </select>
+                                    <button type="submit">Aggiorna</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        <h2>Ordini Delivery</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Dettagli</th>
+                    <th>Prezzo Totale</th>
+                    <th>Indirizzo</th> <!-- Nuova colonna -->
+                    <th>Città</th> <!-- Nuova colonna -->
+                    <th>Stato</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                    {% if order.tipo_di_ordine == "DELIVERY" %}
+                        <tr>
+                            <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                            <td>{{ order.items }}</td>
+                            <td>€{{ order.total_price }}</td>
+                            <td>{{ order.delivery_address }}</td> <!-- Mostra l'indirizzo -->
+                            <td>{{ order.delivery_city }}</td> <!-- Mostra la città -->
+                            <td>{{ order.status }}</td>
+                            <td>
+                                <form method="post" action="{% url 'update_order_status' order.id %}" onsubmit="showPopup(event)">
+                                    {% csrf_token %}
+                                    <select name="status" id="status-select-{{ order.id }}">
+                                        <option value="ORDINE RICEVUTO">Ordine Ricevuto</option>
+                                        <option value="IN PREPARAZIONE">In Preparazione</option>
+                                        <option value="IN CONSEGNA">In Consegna</option>
+                                        <option value="CONSEGNATO">Consegnato</option>
+                                    </select>
+                                    <button type="submit">Aggiorna</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="text-align: center; color: #ff9800;">Nessun ordine trovato.</p>
+    {% endif %}
+    <div class="popup" id="popup">
+        <p id="popup-message">Stato dell'ordine aggiornato con successo!</p>
+        <button onclick="closePopup()">Chiudi</button>
+    </div>
+    <script>
+        function showPopup(event) {
+            event.preventDefault(); // Evita il comportamento predefinito del modulo
+            const popup = document.getElementById('popup');
+            popup.style.display = 'block';
+            setTimeout(() => {
+                event.target.submit(); // Invia il modulo dopo aver mostrato il pop-up
+            }, 1000); // Mostra il pop-up per 1 secondo
+        }
+
+        function closePopup() {
+            const popup = document.getElementById('popup');
+            popup.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

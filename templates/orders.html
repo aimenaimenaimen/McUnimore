@@ -1,0 +1,46 @@
+<!-- filepath: /Users/aimen/Documents/terzo_anno/Tecnologie Web/django_new/PROGETTO/templates/orders.html -->
+{% extends 'base.html' %}
+
+{% block title %}Ordini{% endblock %}
+
+{% block content %}
+<h1 style="text-align: center; color: #ff9800;">Ordini di {{ user.username }}</h1>
+<div style="width: 80%; margin: 20px auto; background-color: #fff8e1; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #ff9800; color: white;">
+                <th style="padding: 10px; text-align: left;">Data</th>
+                <th style="padding: 10px; text-align: left;">Dettagli</th>
+                <th style="padding: 10px; text-align: left;">Prezzo Totale</th>
+                <th style="padding: 10px; text-align: left;">Stato</th>
+                <th style="padding: 10px; text-align: left;">Tipo di Ordine</th>
+                <th style="padding: 10px; text-align: left;">Fast-Food</th> <!-- Nuova colonna -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+                <tr style="background-color: {% cycle '#fff3e0' '#ffffff' %};">
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">
+                        <ul style="margin: 0; padding: 0; list-style: none;">
+                            {% for item in order.items.splitlines %}
+                                <li style="margin-bottom: 5px;">{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">€{{ order.total_price }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ order.status }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ order.tipo_di_ordine }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">
+                        {% if order.fast_food %}
+                            {{ order.fast_food.name }} - {{ order.fast_food.address }}, {{ order.fast_food.city }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+<!-- filepath: /Users/aimen/Documents/terzo_anno/Tecnologie Web/django_new/PROGETTO/templates/homepage.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Homepage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff8e1;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #ff9800; /* Arancione */
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0;
+            display: flex;
+            justify-content: center;
+        }
+        nav ul li {
+            margin: 0 15px;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+        main {
+            padding: 20px;
+            text-align: center;
+        }
+        main h2 {
+            color: #ff9800; /* Arancione */
+        }
+        button {
+            background-color: #ff9800; /* Arancione */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #e68900; /* Arancione più scuro */
+        }
+        footer {
+            background-color: #ff9800; /* Arancione */
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Benvenuto nella Homepage</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'homepage' %}">Homepage</a></li>
+                <li><a href="{% url 'prodotti' %}">Prodotti</a></li>
+                <li>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'orders' %}">Ordini</a>
+                    {% else %}
+                        <a href="{% url 'login' %}">Ordini (Login richiesto)</a>
+                    {% endif %}
+                </li>
+                <li><a href="#">Chi siamo</a></li>
+                <li><a href="#">Contatti</a></li>
+                <li><a href="{% url 'ristoratore_login' %}">Ristoratore</a></li> <!-- Aggiunta voce Ristoratore -->
+            </ul>
+        </nav>
+        {% if user.is_authenticated %}
+            <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+            <button onclick="window.location.href='{% url 'cart' %}'">Vai al Carrello</button>
+        {% else %}
+            <button onclick="window.location.href='{% url 'login' %}'">Login</button>
+        {% endif %}
+    </header>
+    <main>
+        <section>
+            <h2>Introduzione</h2>
+            <p>Questa è la homepage del tuo progetto Django.</p>
+            {% if user.is_authenticated %}
+                <p>BENVENUTO {{ user.username }}</p>
+            {% else %}
+                <button onclick="window.location.href='{% url 'register' %}'">Registrati</button>
+                <button onclick="window.location.href='{% url 'login' %}'">Login</button>
+            {% endif %}
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Il tuo progetto</p>
+    </footer>
+</body>
+</html>

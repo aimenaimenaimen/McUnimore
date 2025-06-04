@@ -1,0 +1,202 @@
+<!-- filepath: /Users/aimen/Documents/terzo_anno/Tecnologie Web/django_new/PROGETTO/templates/cart.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrello</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff8e1; /* Bianco con sfumatura arancione */
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background-color: #ff9800; /* Arancione */
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+        }
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+        h1 {
+            text-align: center;
+            color: #ff9800; /* Arancione */
+            margin-top: 20px;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #ffffff; /* Bianco */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #ff9800; /* Arancione */
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #fff3e0; /* Sfumatura arancione */
+        }
+        tr:hover {
+            background-color: #ffe0b2; /* Colore più chiaro al passaggio del mouse */
+        }
+        .total-price {
+            text-align: right;
+            margin: 20px auto;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ff9800; /* Arancione */
+            width: 80%;
+        }
+        button {
+            background-color: #ff9800; /* Arancione */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #e68900; /* Colore arancione più scuro al passaggio del mouse */
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu in alto -->
+    <div class="navbar">
+        <a href="{% url 'homepage' %}">Homepage</a>
+        <a href="{% url 'prodotti' %}">Prodotti</a>
+        <a href="{% url 'cart' %}">Carrello</a>
+        <a href="{% url 'orders' %}">Ordini</a> <!-- Link alla pagina degli ordini -->
+    </div>
+
+    <h1>Carrello di {{ user.username }}</h1>
+
+    {% if messages %}
+        <div style="color: red; font-weight: bold; margin-bottom: 20px;">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if cart_items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome del Prodotto</th>
+                    <th>Quantità</th>
+                    <th>Prezzo Unitario</th>
+                    <th>Prezzo Parziale</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cart_item in cart_items %}
+                    <tr>
+                        <td>{{ cart_item.product.name }}</td>
+                        <td>{{ cart_item.quantity }}</td>
+                        <td>€{{ cart_item.product.price }}</td>
+                        <td>€{{ cart_item.partial_price|floatformat:2 }}</td> <!-- Usa il valore calcolato nella vista -->
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="total-price">
+            Prezzo Totale: €{{ total_price }}
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div style="margin-bottom: 20px;">
+                <label for="tipo_di_ordine" style="font-weight: bold;">Tipo di Ordine:</label>
+                <select id="tipo_di_ordine" name="tipo_di_ordine" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd;" onchange="toggleOrderOptions(this.value)">
+                    <option value="DELIVERY">Delivery</option>
+                    <option value="IN LOCO">In Loco</option>
+                </select>
+            </div>
+            <div id="delivery-options" style="display: none; margin-bottom: 20px;">
+                <label for="delivery_address" style="font-weight: bold;">Indirizzo di Consegna:</label>
+                <input type="text" id="delivery_address" name="delivery_address" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                <label for="delivery_city" style="font-weight: bold;">Città:</label>
+                <input type="text" id="delivery_city" name="delivery_city" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                <label for="delivery_fast_food" style="font-weight: bold;">Scegli un fast-food per la consegna:</label>
+                <select id="delivery_fast_food" name="delivery_fast_food" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                    {% for fast_food in fast_foods %}
+                        <option value="{{ fast_food.id }}">{{ fast_food.name }} - {{ fast_food.address }}, {{ fast_food.city }} ({{ fast_food.postal_code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div id="fast-food-options" style="display: none; margin-bottom: 20px;">
+                <label for="fast_food" style="font-weight: bold;">Scegli un fast-food:</label>
+                <select id="fast_food" name="fast_food" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                    {% for fast_food in fast_foods %}
+                        <option value="{{ fast_food.id }}">{{ fast_food.name }} - {{ fast_food.address }}, {{ fast_food.city }} ({{ fast_food.postal_code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" name="place_order" style="background-color: #ff9800; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px; margin-top: 20px;">Effettua Ordine</button>
+        </form>
+    {% else %}
+        <div style="text-align: center; margin-top: 20px; color: #ff9800; font-size: 1.5em; font-weight: bold;">
+            Il carrello è vuoto.
+        </div>
+    {% endif %}
+    <script>
+        // Funzione per gestire la visualizzazione delle opzioni in base al tipo di ordine
+        function toggleOrderOptions(value) {
+            const deliveryOptions = document.getElementById('delivery-options');
+            const fastFoodOptions = document.getElementById('fast-food-options');
+            if (value === 'DELIVERY') {
+                deliveryOptions.style.display = 'block';
+                fastFoodOptions.style.display = 'none';
+            } else if (value === 'IN LOCO') {
+                deliveryOptions.style.display = 'none';
+                fastFoodOptions.style.display = 'block';
+            } else {
+                deliveryOptions.style.display = 'none';
+                fastFoodOptions.style.display = 'none';
+            }
+        }
+
+        // Imposta l'opzione "Delivery" come predefinita e mostra i campi corrispondenti
+        document.addEventListener('DOMContentLoaded', function () {
+            const tipoDiOrdineSelect = document.getElementById('tipo_di_ordine');
+            tipoDiOrdineSelect.value = 'DELIVERY'; // Imposta "Delivery" come opzione predefinita
+            toggleOrderOptions(tipoDiOrdineSelect.value); // Mostra i campi corrispondenti
+        });
+
+        function validateForm(event) {
+            const tipoDiOrdine = document.getElementById('tipo_di_ordine').value;
+            if (tipoDiOrdine === 'DELIVERY') {
+                const deliveryAddress = document.getElementById('delivery_address').value.trim();
+                const deliveryCity = document.getElementById('delivery_city').value.trim();
+
+                if (!deliveryAddress || !deliveryCity) {
+                    alert('Per gli ordini Delivery, i campi Indirizzo e Città sono obbligatori.');
+                    event.preventDefault(); // Impedisce l'invio del form
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        document.querySelector('form').addEventListener('submit', validateForm);
+    </script>
+</body>
+</html>
