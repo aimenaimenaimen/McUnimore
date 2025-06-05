@@ -13,6 +13,7 @@ class BaseModel(models.Model):
 # Create your models here.
 class User(AbstractUser):
     is_ristoratore = models.BooleanField(default=False)  # Flag per identificare i ristoratori, di default False
+    #revealed_coupons = models.ManyToManyField('Coupon', blank=True)
 
 class Product(models.Model):
     name = models.CharField(max_length=255)

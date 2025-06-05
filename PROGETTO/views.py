@@ -8,6 +8,8 @@ from gestione.models import User, Order, FastFood, Coupon  # Usa un'importazione
 import pytz
 import random
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 def homepage(request):
     return render(request, 'homepage.html')
@@ -51,9 +53,6 @@ def logout_view(request):
     return redirect('homepage')
 
 def cart_view(request):
-    if not request.user.is_authenticated:
-        return redirect('login')  # Reindirizza al login se non autenticato
-
     cart = Cart.objects.get(user=request.user)
     cart_items = CartItem.objects.filter(cart=cart)
     total_price = sum(item.product.price * item.quantity for item in cart_items)
@@ -64,13 +63,19 @@ def cart_view(request):
 
     if request.method == 'POST':
         order_type = request.POST.get('order_type')
-        fast_food_id = request.POST.get('fast_food')
         address = request.POST.get('address')
         city = request.POST.get('city')
+        fast_food_id = request.POST.get('fast_food')
 
-        # Validazione
-        if order_type == 'delivery' and (not address or not city):
-            messages.error(request, "Indirizzo e città sono obbligatori per la consegna.")
+        # Validazione per il tipo di ordine "Delivery"
+        if order_type == 'delivery':
+            if not address or not city:
+                messages.error(request, "Indirizzo e città sono obbligatori per la consegna.")
+                return redirect('cart')
+
+        # Validazione per il fast-food
+        if not fast_food_id:
+            messages.error(request, "Seleziona un fast-food.")
             return redirect('cart')
 
         fast_food = FastFood.objects.get(id=fast_food_id) if fast_food_id else None
@@ -78,13 +83,20 @@ def cart_view(request):
         # Creazione ordine
         order = Order.objects.create(
             user=request.user,
-            cart=cart,
-            order_type=order_type,
+            total_price=total_price,
+            items=", ".join([f"{item.quantity}x {item.product.name}" for item in cart_items]),
+            tipo_di_ordine=order_type,
             fast_food=fast_food,
-            address=address,
-            city=city,
-            total_price=total_price
+            delivery_address=address if order_type == 'delivery' else None,
+            delivery_city=city if order_type == 'delivery' else None
         )
+
+        # Svuota il carrello
+        cart_items.delete()
+        cart.total_price = 0
+        cart.coupon = None
+        cart.save()
+
         messages.success(request, "Ordine effettuato con successo!")
         return redirect('orders')
 
@@ -153,24 +165,19 @@ def orders_view(request):
     return render(request, 'orders.html', {'orders': orders})
 
 def gestione_ordine(request):
-    if not request.user.is_authenticated or not request.user.is_ristoratore:
-        return redirect('ristoratore_login')  # Reindirizza al login se non autenticato o non autorizzato
+    fast_foods = FastFood.objects.all()
+    selected_fast_food = None
+    orders = []
 
-    fast_foods = FastFood.objects.all()  # Recupera tutti i fast-food
-    selected_fast_food = request.GET.get('fast_food')  # Recupera il fast-food selezionato
-    orders = Order.objects.filter(fast_food_id=selected_fast_food) if selected_fast_food else []
-
-    fast_food_id = request.GET.get('fast_food')  # Ottieni l'ID del fast food selezionato
-    fast_food_name = None
-
-    if fast_food_id:
-        fast_food = next((ff for ff in fast_foods if ff.id == int(fast_food_id)), None)
-        fast_food_name = fast_food.name if fast_food else None
+    if 'fast_food' in request.GET:
+        fast_food_id = request.GET.get('fast_food')
+        selected_fast_food = get_object_or_404(FastFood, id=fast_food_id)
+        orders = Order.objects.filter(fast_food=selected_fast_food).order_by('-created_at')
 
     context = {
-        'fast_foods': fast_foods,  # Lista di fast food
-        'orders': orders,          # Lista di ordini
-        'selected_fast_food': fast_food_name,  # Nome del fast food selezionato
+        'fast_foods': fast_foods,
+        'selected_fast_food': selected_fast_food.name if selected_fast_food else "Tutti",
+        'orders': orders,
     }
     return render(request, 'gestione_ordine.html', context)
 
@@ -188,46 +195,62 @@ def ristoratore_login(request):
 
     return render(request, 'ristoratore_login.html')
 
+@login_required
 def update_order_status(request, order_id):
-    if not request.user.is_authenticated or not request.user.is_ristoratore:
-        return redirect('ristoratore_login')  # Reindirizza al login se non autenticato o non autorizzato
-
     if request.method == 'POST':
-        status = request.POST.get('status')
-        order = Order.objects.get(id=order_id)
-        order.status = status
+        order = get_object_or_404(Order, id=order_id)
+        new_status = request.POST.get('status')
+        order.status = new_status
         order.save()
+        messages.success(request, f"Lo stato dell'ordine è stato aggiornato a '{new_status}'.")
         return redirect('gestione_ordine')  # Reindirizza alla pagina di gestione ordini
 
 @login_required
 def coupon_page(request):
-    # Seleziona 5 coupon casuali attivi
-    coupons = list(Coupon.objects.filter(is_active=True))
-    random_coupons = random.sample(coupons, min(len(coupons), 5))
-
-    # Aggiungi informazione sui coupon rivelati dall'utente
-    revealed_coupons = request.user.revealed_coupons.all()
+    cart = Cart.objects.get(user=request.user)
+    # Filtra solo i coupon attivi e non applicati
+    revealed_coupons = request.user.revealed_coupons.filter(is_active=True).exclude(id=cart.coupon.id if cart.coupon else None)
 
     context = {
-        'coupons': random_coupons,
         'revealed_coupons': revealed_coupons,
     }
     return render(request, 'coupon_page.html', context)
 
+@login_required
 def apply_coupon(request):
     if request.method == 'POST':
-        coupon_code = request.POST.get('coupon_code')
-        coupon = get_object_or_404(Coupon, code=coupon_code, is_active=True)
         cart = Cart.objects.get(user=request.user)
-        cart.coupon = coupon
-        cart.save()
-        return redirect('cart')  # Reindirizza al carrello
+        if cart.coupon:
+            messages.error(request, "Hai già applicato un coupon.")
+            return redirect('cart')
+
+        coupon_code = request.POST.get('coupon_code')
+        try:
+            coupon = Coupon.objects.get(code=coupon_code, is_active=True)
+            cart.coupon = coupon
+            cart.save()
+
+            # Disattiva il coupon
+            coupon.is_active = False
+            coupon.save()
+
+            messages.success(request, f"Coupon '{coupon_code}' accettato! Sconto del {coupon.discount}% applicato.")
+        except Coupon.DoesNotExist:
+            messages.error(request, "Il coupon inserito non è valido o è scaduto.")
+        return redirect('cart')
 
 @csrf_exempt
 @login_required
 def reveal_coupon(request, coupon_id):
-    if request.method == 'POST':
-        coupon = Coupon.objects.get(id=coupon_id)
-        coupon.revealed_by.add(request.user)
-        return JsonResponse({'status': 'success'})
-    return JsonResponse({'status': 'error'}, status=400)
+    coupon = get_object_or_404(Coupon, id=coupon_id, is_active=True)
+    request.user.revealed_coupons.add(coupon)  # Assumi che ci sia una relazione ManyToMany tra User e Coupon
+    messages.success(request, f"Hai rivelato il coupon: {coupon.code}")
+    return redirect('coupon_page')
+
+@receiver(post_save, sender=User)
+def assign_coupons_to_user(sender, instance, created, **kwargs):
+    if created:  # Esegui solo quando l'utente viene creato
+        coupons = Coupon.objects.filter(is_active=True)[:5]  # Prendi i primi 5 coupon attivi
+        num_coupons = random.randint(3, 5)  # Numero casuale tra 3 e 5
+        for coupon in random.sample(list(coupons), min(num_coupons, len(coupons))):
+            instance.revealed_coupons.add(coupon)

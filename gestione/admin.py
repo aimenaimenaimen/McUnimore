@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Product, Order, User, FastFood
+from .models import Product, Order, User, FastFood, Coupon
 
 class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
@@ -28,3 +28,9 @@ class OrderAdmin(admin.ModelAdmin):
         return self.readonly_fields + ('status',)
 
 admin.site.register(Order, OrderAdmin)
+
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+    list_display = ('code', 'discount', 'description', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('code', 'description')

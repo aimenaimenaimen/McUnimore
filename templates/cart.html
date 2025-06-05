@@ -8,9 +8,11 @@
     <h1 style="text-align: center; color: #ff9800;">Carrello di {{ user.username }}</h1>
 
     {% if messages %}
-        <div style="color: green; font-weight: bold; margin-bottom: 20px; text-align: center;">
+        <div style="margin-bottom: 20px; text-align: center;">
             {% for message in messages %}
-                <p>{{ message }}</p>
+                <p style="color: {% if message.tags == 'success' %}green{% else %}red{% endif %}; font-weight: bold;">
+                    {{ message }}
+                </p>
             {% endfor %}
         </div>
     {% endif %}
@@ -57,12 +59,12 @@
 
             <div id="delivery-fields" style="display: none; margin-top: 10px;">
                 <label>Indirizzo:</label>
-                <input type="text" name="address" placeholder="Inserisci l'indirizzo" style="width: 100%; padding: 10px; margin-top: 5px;">
+                <input type="text" name="address" placeholder="Inserisci l'indirizzo" style="width: 100%; padding: 10px; margin-top: 5px;" required>
                 <label>Città:</label>
-                <input type="text" name="city" placeholder="Inserisci la città" style="width: 100%; padding: 10px; margin-top: 5px;">
+                <input type="text" name="city" placeholder="Inserisci la città" style="width: 100%; padding: 10px; margin-top: 5px;" required>
             </div>
 
-            <div id="in-loco-fields" style="display: none; margin-top: 10px;">
+            <div id="fast-food-fields" style="display: none; margin-top: 10px;">
                 <label>Seleziona il Fast Food:</label>
                 <select name="fast_food" style="width: 100%; padding: 10px; margin-top: 5px;">
                     <option value="">-- Seleziona --</option>
@@ -72,12 +74,20 @@
                 </select>
             </div>
 
-            <h3 style="color: #ff9800; margin-top: 20px;">Inserisci il Coupon</h3>
-            <input type="text" name="coupon_code" placeholder="Codice Coupon" style="width: 100%; padding: 10px; margin-top: 5px;">
-            <button type="submit" formaction="{% url 'apply_coupon' %}" style="background-color: #ff9800; color: white; padding: 10px 15px; border: none; border-radius: 5px; margin-top: 10px;">Applica Coupon</button>
-
             <button type="submit" style="background-color: #4caf50; color: white; padding: 10px 15px; border: none; border-radius: 5px; margin-top: 20px;">Effettua Ordine</button>
         </form>
+
+        {% if not cart.coupon %}
+            <form method="post" action="{% url 'apply_coupon' %}" style="margin: 20px auto; text-align: center;">
+                {% csrf_token %}
+                <input type="text" name="coupon_code" placeholder="Inserisci il codice coupon" style="padding: 10px; width: 300px;">
+                <button type="submit" style="background-color: #ff9800; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">Applica Coupon</button>
+            </form>
+        {% else %}
+            <div style="text-align: center; margin-top: 20px; color: red; font-weight: bold;">
+                Hai già applicato un coupon: <strong>{{ cart.coupon.code }}</strong> ({{ cart.coupon.discount }}% di sconto).
+            </div>
+        {% endif %}
     {% else %}
         <div style="text-align: center; margin-top: 20px; color: #ff9800; font-size: 1.5em; font-weight: bold;">
             Il carrello è vuoto.
@@ -88,8 +98,22 @@
 <script>
     document.querySelectorAll('input[name="order_type"]').forEach(radio => {
         radio.addEventListener('change', function() {
-            document.getElementById('delivery-fields').style.display = this.value === 'delivery' ? 'block' : 'none';
-            document.getElementById('in-loco-fields').style.display = this.value === 'in_loco' ? 'block' : 'none';
+            const deliveryFields = document.getElementById('delivery-fields');
+            const fastFoodFields = document.getElementById('fast-food-fields');
+            const addressInput = document.querySelector('input[name="address"]');
+            const cityInput = document.querySelector('input[name="city"]');
+
+            if (this.value === 'delivery') {
+                deliveryFields.style.display = 'block'; // Mostra i campi per Delivery
+                fastFoodFields.style.display = 'block'; // Mostra il campo Fast Food
+                addressInput.required = true; // Rendi obbligatorio l'indirizzo
+                cityInput.required = true; // Rendi obbligatoria la città
+            } else if (this.value === 'in_loco') {
+                deliveryFields.style.display = 'none'; // Nascondi i campi per Delivery
+                fastFoodFields.style.display = 'block'; // Mostra il campo Fast Food
+                addressInput.required = false; // Rimuovi obbligatorietà dell'indirizzo
+                cityInput.required = false; // Rimuovi obbligatorietà della città
+            }
         });
     });
 </script>

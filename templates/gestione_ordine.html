@@ -80,6 +80,18 @@
             <button type="submit" class="logout-button">Logout</button>
         </form>
     </header>
+
+    <!-- Mostra i messaggi di conferma -->
+    {% if messages %}
+        <div style="margin: 20px auto; text-align: center;">
+            {% for message in messages %}
+                <p style="color: {% if message.tags == 'success' %}green{% else %}red{% endif %}; font-weight: bold;">
+                    {{ message }}
+                </p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <p style="text-align: center; color: #333; font-size: 1.2em; margin-top: 10px;">
         Sei loggato come: <strong>{{ user.username }}</strong>
     </p>
@@ -106,7 +118,7 @@
             </thead>
             <tbody>
                 {% for order in orders %}
-                    {% if order.tipo_di_ordine == "IN LOCO" %}
+                    {% if order.tipo_di_ordine == "in_loco" %}
                         <tr>
                             <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
                             <td>{{ order.items }}</td>
@@ -115,7 +127,7 @@
                             <td>
                                 <form method="post" action="{% url 'update_order_status' order.id %}" onsubmit="showPopup(event)">
                                     {% csrf_token %}
-                                    <select name="status" id="status-select-{{ order.id }}">
+                                    <select name="status">
                                         <option value="ORDINE RICEVUTO">Ordine Ricevuto</option>
                                         <option value="IN PREPARAZIONE">In Preparazione</option>
                                         <option value="IN CONSEGNA">In Consegna</option>
@@ -129,6 +141,7 @@
                 {% endfor %}
             </tbody>
         </table>
+
         <h2>Ordini Delivery</h2>
         <table>
             <thead>
@@ -136,26 +149,26 @@
                     <th>Data</th>
                     <th>Dettagli</th>
                     <th>Prezzo Totale</th>
-                    <th>Indirizzo</th> <!-- Nuova colonna -->
-                    <th>Città</th> <!-- Nuova colonna -->
+                    <th>Indirizzo</th>
+                    <th>Città</th>
                     <th>Stato</th>
                     <th>Azioni</th>
                 </tr>
             </thead>
             <tbody>
                 {% for order in orders %}
-                    {% if order.tipo_di_ordine == "DELIVERY" %}
+                    {% if order.tipo_di_ordine == "delivery" %}
                         <tr>
                             <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
                             <td>{{ order.items }}</td>
                             <td>€{{ order.total_price }}</td>
-                            <td>{{ order.delivery_address }}</td> <!-- Mostra l'indirizzo -->
-                            <td>{{ order.delivery_city }}</td> <!-- Mostra la città -->
+                            <td>{{ order.delivery_address }}</td>
+                            <td>{{ order.delivery_city }}</td>
                             <td>{{ order.status }}</td>
                             <td>
-                                <form method="post" action="{% url 'update_order_status' order.id %}" onsubmit="showPopup(event)">
+                                <form method="post" action="{% url 'update_order_status' order.id %}">
                                     {% csrf_token %}
-                                    <select name="status" id="status-select-{{ order.id }}">
+                                    <select name="status">
                                         <option value="ORDINE RICEVUTO">Ordine Ricevuto</option>
                                         <option value="IN PREPARAZIONE">In Preparazione</option>
                                         <option value="IN CONSEGNA">In Consegna</option>
