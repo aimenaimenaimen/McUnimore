@@ -108,8 +108,9 @@ def cart_view(request):
 
         cart.save()
 
+        # Aggiungi un messaggio di successo
         messages.success(request, "Ordine effettuato con successo!")
-        return redirect('orders')
+        return redirect('cart')
 
     fast_foods = FastFood.objects.all()
     context = {

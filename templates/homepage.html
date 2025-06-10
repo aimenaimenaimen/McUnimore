@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Homepage</title>
+    <title>Fast Food - Homepage</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,7 +19,7 @@
         }
         header h1 {
             margin: 0;
-            font-size: 2em;
+            font-size: 2.5em;
         }
         nav ul {
             list-style: none;
@@ -40,13 +40,28 @@
             text-decoration: underline;
         }
         main {
-            padding: 20px;
+            padding: 40px 20px;
             text-align: center;
         }
         main h2 {
             color: #ff9800; /* Arancione */
+            font-size: 2em;
+            margin-bottom: 20px;
         }
-        button {
+        .intro {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            width: 80%;
+        }
+        .intro p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            color: #555;
+        }
+        .intro button {
             background-color: #ff9800; /* Arancione */
             color: white;
             border: none;
@@ -54,8 +69,9 @@
             cursor: pointer;
             border-radius: 5px;
             margin: 10px;
+            font-size: 1em;
         }
-        button:hover {
+        .intro button:hover {
             background-color: #e68900; /* Arancione più scuro */
         }
         footer {
@@ -71,22 +87,22 @@
 </head>
 <body>
     <header>
-        <h1>Benvenuto nella Homepage</h1>
+        <h1>Benvenuto su McUnimore!</h1>
         <nav>
             <ul>
                 <li><a href="{% url 'homepage' %}">Homepage</a></li>
-                <li><a href="{% url 'prodotti' %}">Prodotti</a></li>
+                <li><a href="{% url 'prodotti' %}">Menu</a></li>
                 <li>
                     {% if user.is_authenticated %}
-                        <a href="{% url 'orders' %}">Ordini</a>
+                        <a href="{% url 'orders' %}">I tuoi Ordini</a>
                     {% else %}
                         <a href="{% url 'login' %}">Ordini (Login richiesto)</a>
                     {% endif %}
                 </li>
-                <li><a href="{% url 'coupon_page' %}">Coupon</a></li>
-                <li><a href="#">Chi siamo</a></li>
-                <li><a href="#">Contatti</a></li>
-                <li><a href="{% url 'ristoratore_login' %}">Ristoratore</a></li> <!-- Aggiunta voce Ristoratore -->
+                <li><a href="{% url 'coupon_page' %}">Offerte</a></li>
+                <!-- <li><a href="#">Chi siamo</a></li> -->
+                <!-- <li><a href="#">Contatti</a></li> -->
+                <li><a href="{% url 'ristoratore_login' %}">Area Ristoratore</a></li>
             </ul>
         </nav>
         {% if user.is_authenticated %}
@@ -100,11 +116,13 @@
         {% endif %}
     </header>
     <main>
-        <section>
-            <h2>Introduzione</h2>
-            <p>Questa è la homepage del tuo progetto Django.</p>
+        <section class="intro">
+            <h2>Scopri il nostro menu!</h2>
+            <p>Benvenuto nel nostro fast food! Scegli tra una vasta selezione di hamburger, patatine, bevande e molto altro. Approfitta delle offerte esclusive e utilizza i tuoi coupon per ottenere sconti incredibili.</p>
             {% if user.is_authenticated %}
-                <p>BENVENUTO {{ user.username }}</p>
+                
+                <button onclick="window.location.href='{% url 'prodotti' %}'">Esplora il Menu</button>
+                <button onclick="window.location.href='{% url 'coupon_page' %}'">Le tue Offerte</button>
             {% else %}
                 <button onclick="window.location.href='{% url 'register' %}'">Registrati</button>
                 <button onclick="window.location.href='{% url 'login' %}'">Login</button>
@@ -112,7 +130,7 @@
         </section>
     </main>
     <footer>
-        <p>&copy; 2025 Il tuo progetto</p>
+        <p>&copy; 2025 McUnimore - Il tuo fast-food preferito</p>
     </footer>
 </body>
 </html>

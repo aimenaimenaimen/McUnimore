@@ -114,4 +114,16 @@
         });
     });
 </script>
+
+{% if messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    alert("{{ message }}");
+                {% endif %}
+            {% endfor %}
+        });
+    </script>
+{% endif %}
 {% endblock %}
