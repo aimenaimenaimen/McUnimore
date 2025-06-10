@@ -77,17 +77,14 @@
             <button type="submit" style="background-color: #4caf50; color: white; padding: 10px 15px; border: none; border-radius: 5px; margin-top: 20px;">Effettua Ordine</button>
         </form>
 
-        {% if not cart.coupon %}
-            <form method="post" action="{% url 'apply_coupon' %}" style="margin: 20px auto; text-align: center;">
+        <div style="margin-top: 20px;">
+            <h3>Applica un Coupon</h3>
+            <form method="POST" action="{% url 'apply_coupon' %}">
                 {% csrf_token %}
-                <input type="text" name="coupon_code" placeholder="Inserisci il codice coupon" style="padding: 10px; width: 300px;">
-                <button type="submit" style="background-color: #ff9800; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">Applica Coupon</button>
+                <input type="text" name="coupon_code" placeholder="Inserisci il codice del coupon" required>
+                <button type="submit" style="background-color: #ff9800; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Applica</button>
             </form>
-        {% else %}
-            <div style="text-align: center; margin-top: 20px; color: red; font-weight: bold;">
-                Hai già applicato un coupon: <strong>{{ cart.coupon.code }}</strong> ({{ cart.coupon.discount }}% di sconto).
-            </div>
-        {% endif %}
+        </div>
     {% else %}
         <div style="text-align: center; margin-top: 20px; color: #ff9800; font-size: 1.5em; font-weight: bold;">
             Il carrello è vuoto.

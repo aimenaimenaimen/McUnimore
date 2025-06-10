@@ -7,9 +7,11 @@ from gestione.models import Product, Cart, CartItem
 from gestione.models import User, Order, FastFood, Coupon  # Usa un'importazione assoluta
 import pytz
 import random
+import string
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from gestione.models import Coupon
 
 def homepage(request):
     return render(request, 'homepage.html')
@@ -23,6 +25,9 @@ def register(request):
         user = User(username=username)
         user.set_password(password)  # Hasha la password
         user.save()
+
+        # Crea un carrello per il nuovo utente
+        Cart.objects.create(user=user)
 
         # Autentica e logga l'utente
         user = authenticate(request, username=username, password=password)
@@ -94,7 +99,13 @@ def cart_view(request):
         # Svuota il carrello
         cart_items.delete()
         cart.total_price = 0
-        cart.coupon = None
+
+        # Disattiva il coupon dopo l'ordine
+        if cart.coupon:
+            cart.coupon.is_active = False
+            cart.coupon.save()
+            cart.coupon = None
+
         cart.save()
 
         messages.success(request, "Ordine effettuato con successo!")
@@ -207,50 +218,56 @@ def update_order_status(request, order_id):
 
 @login_required
 def coupon_page(request):
-    cart = Cart.objects.get(user=request.user)
-    # Filtra solo i coupon attivi e non applicati
-    revealed_coupons = request.user.revealed_coupons.filter(is_active=True).exclude(id=cart.coupon.id if cart.coupon else None)
-
+    coupons = Coupon.objects.filter(user=request.user, is_active=True)  # Mostra solo i coupon attivi
     context = {
-        'revealed_coupons': revealed_coupons,
+        'coupons': coupons,
     }
     return render(request, 'coupon_page.html', context)
 
 @login_required
+@csrf_exempt
+def reveal_coupon(request, coupon_id):
+    if request.method == 'POST':
+        coupon = get_object_or_404(Coupon, id=coupon_id, user=request.user, is_active=True)
+        # Non modificare is_active, solo rivelare il codice
+        coupon.is_active = True  # Mantieni il coupon attivo
+        return redirect('coupon_page')
+
+@receiver(post_save, sender=User)
+def generate_coupons_for_user(sender, instance, created, **kwargs):
+    if created:  # Esegui solo quando l'utente viene creato
+        num_coupons = random.randint(3, 5)  # Genera un numero casuale di coupon (tra 3 e 5)
+        for _ in range(num_coupons):
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))  # Codice casuale
+            discount = random.randint(5, 12)  # Sconto casuale tra il 5% e il 12%
+            description = f"Coupon con {discount}% di sconto"
+            
+            # Crea il coupon e associarlo all'utente
+            Coupon.objects.create(
+                user=instance,
+                code=code,
+                discount=discount,
+                description=description,
+                is_active=True
+            )
+
+@login_required
 def apply_coupon(request):
     if request.method == 'POST':
-        cart = Cart.objects.get(user=request.user)
-        if cart.coupon:
-            messages.error(request, "Hai già applicato un coupon.")
-            return redirect('cart')
-
         coupon_code = request.POST.get('coupon_code')
+        cart = Cart.objects.get(user=request.user)
+
         try:
-            coupon = Coupon.objects.get(code=coupon_code, is_active=True)
-            cart.coupon = coupon
+            coupon = Coupon.objects.get(code=coupon_code, user=request.user, is_active=True)
+            cart.coupon = coupon  # Associa il coupon al carrello
             cart.save()
 
-            # Disattiva il coupon
+            # Disattiva il coupon dopo l'applicazione
             coupon.is_active = False
             coupon.save()
 
-            messages.success(request, f"Coupon '{coupon_code}' accettato! Sconto del {coupon.discount}% applicato.")
+            messages.success(request, f"Il coupon '{coupon.code}' è stato applicato con successo!")
         except Coupon.DoesNotExist:
-            messages.error(request, "Il coupon inserito non è valido o è scaduto.")
-        return redirect('cart')
+            messages.error(request, "Il codice del coupon non è valido o il coupon è già stato utilizzato.")
 
-@csrf_exempt
-@login_required
-def reveal_coupon(request, coupon_id):
-    coupon = get_object_or_404(Coupon, id=coupon_id, is_active=True)
-    request.user.revealed_coupons.add(coupon)  # Assumi che ci sia una relazione ManyToMany tra User e Coupon
-    messages.success(request, f"Hai rivelato il coupon: {coupon.code}")
-    return redirect('coupon_page')
-
-@receiver(post_save, sender=User)
-def assign_coupons_to_user(sender, instance, created, **kwargs):
-    if created:  # Esegui solo quando l'utente viene creato
-        coupons = Coupon.objects.filter(is_active=True)[:5]  # Prendi i primi 5 coupon attivi
-        num_coupons = random.randint(3, 5)  # Numero casuale tra 3 e 5
-        for coupon in random.sample(list(coupons), min(num_coupons, len(coupons))):
-            instance.revealed_coupons.add(coupon)
+        return redirect('cart')  # Reindirizza alla pagina del carrello

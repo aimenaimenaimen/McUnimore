@@ -12,8 +12,8 @@ class BaseModel(models.Model):
         app_label = 'wdland'
 # Create your models here.
 class User(AbstractUser):
-    is_ristoratore = models.BooleanField(default=False)  # Flag per identificare i ristoratori, di default False
-    #revealed_coupons = models.ManyToManyField('Coupon', blank=True)
+    is_ristoratore = models.BooleanField(default=False)  # Flag per identificare i ristoratori
+    revealed_coupons = models.ManyToManyField('Coupon', blank=True, related_name='revealed_by_users')  # Cambia il related_name
 
 class Product(models.Model):
     name = models.CharField(max_length=255)
@@ -24,19 +24,14 @@ class Product(models.Model):
         return self.name
 
 class Coupon(models.Model):
-    code = models.CharField(max_length=8, unique=True)
-    discount = models.IntegerField()  # Percentuale di sconto come numero intero
-    description = models.TextField(blank=True, null=True)  # Descrizione del coupon
-    is_active = models.BooleanField(default=True)
-    revealed_by = models.ManyToManyField(User, related_name='revealed_coupons', blank=True)
-
-    @staticmethod
-    def generate_random_code():
-        import random
-        return ''.join(random.choices('0123456789', k=8))  # Genera un codice di 8 cifre numeriche
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='owned_coupons')  # Cambia il related_name
+    code = models.CharField(max_length=50, unique=True)  # Codice univoco del coupon
+    discount = models.IntegerField()  # Percentuale di sconto
+    description = models.CharField(max_length=255)  # Descrizione del coupon
+    is_active = models.BooleanField(default=True)  # Stato del coupon (attivo o meno)
 
     def __str__(self):
-        return self.code
+        return f"{self.code} - {self.discount}%"
     
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

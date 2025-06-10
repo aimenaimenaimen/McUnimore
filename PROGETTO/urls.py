@@ -34,8 +34,8 @@ urlpatterns = [
     path('gestione_ordine/', views.gestione_ordine, name='gestione_ordine'),  # Nuovo percorso per la gestione ordini
     path('update_order_status/<int:order_id>/', views.update_order_status, name='update_order_status'),
     path('coupon/', views.coupon_page, name='coupon_page'),
+    path('reveal_coupon/<int:coupon_id>/', views.reveal_coupon, name='reveal_coupon'),  # Aggiungi questa linea
     path('apply_coupon/', views.apply_coupon, name='apply_coupon'),
-    path('reveal_coupon/<int:coupon_id>/', views.reveal_coupon, name='reveal_coupon'),
 ]
 
 

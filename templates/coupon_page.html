@@ -6,20 +6,14 @@
 <h1 style="text-align: center; color: #ff9800;">I tuoi Coupon</h1>
 
 <div style="width: 80%; margin: 20px auto; background-color: #fff8e1; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
-    {% if revealed_coupons %}
-        <h3 style="color: #ff9800;">Coupon Disponibili</h3>
-        <ul style="list-style: none; padding: 0;">
-            {% for coupon in revealed_coupons %}
-                {% if coupon.is_active %}
-                    <li style="margin-bottom: 10px; padding: 10px; background-color: #ffffff; border: 1px solid #ddd; border-radius: 5px;">
-                        <strong>Descrizione:</strong> {{ coupon.description }}<br>
-                        <strong>Codice:</strong> {{ coupon.code }}
-                    </li>
-                {% endif %}
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p style="text-align: center; color: red;">Non ci sono coupon disponibili.</p>
-    {% endif %}
+    <h3 style="color: #ff9800;">I tuoi Coupon</h3>
+    <ul style="list-style: none; padding: 0;">
+        {% for coupon in coupons %}
+            <li style="margin-bottom: 10px; padding: 10px; background-color: #ffffff; border: 1px solid #ddd; border-radius: 5px;">
+                <strong>Descrizione:</strong> {{ coupon.description }}<br>
+                <strong>Codice:</strong> <span style="color: green;">{{ coupon.code }}</span>
+            </li>
+        {% endfor %}
+    </ul>
 </div>
 {% endblock %}
