@@ -57,14 +57,13 @@ class CartItem(models.Model):
         return f"{self.quantity} x {self.product.name} nel carrello di {self.cart.user.username}"
 
 class FastFood(models.Model):
-    name = models.CharField(max_length=255)  # Nome del fast-food
-    address = models.CharField(max_length=255)  # Indirizzo del fast-food
-    city = models.CharField(max_length=100)  # Città
-    postal_code = models.CharField(max_length=10)  # Codice postale
-    manager = models.ForeignKey(User, on_delete=models.CASCADE, related_name="managed_fast_foods")  # Ristoratore responsabile
+    name = models.CharField(max_length=255)  # Nome del fast food
+    address = models.CharField(max_length=255)  # Indirizzo del fast food
+    latitude = models.FloatField()  # Latitudine
+    longitude = models.FloatField()  # Longitudine
 
     def __str__(self):
-        return f"{self.name} - {self.address}, {self.city} ({self.postal_code})"
+        return self.name
     
 class Order(models.Model):
     STATUS_CHOICES = [

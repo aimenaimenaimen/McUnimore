@@ -235,8 +235,9 @@ def reveal_coupon(request, coupon_id):
         return redirect('coupon_page')
 
 @receiver(post_save, sender=User)
-def generate_coupons_for_user(sender, instance, created, **kwargs):
+def generate_coupons_and_cart_for_user(sender, instance, created, **kwargs):
     if created:  # Esegui solo quando l'utente viene creato
+        # Genera i coupon
         num_coupons = random.randint(3, 5)  # Genera un numero casuale di coupon (tra 3 e 5)
         for _ in range(num_coupons):
             code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))  # Codice casuale
@@ -251,6 +252,9 @@ def generate_coupons_for_user(sender, instance, created, **kwargs):
                 description=description,
                 is_active=True
             )
+        
+        # Crea un carrello per il nuovo utente
+        Cart.objects.create(user=instance)
 
 @login_required
 def apply_coupon(request):
@@ -272,3 +276,8 @@ def apply_coupon(request):
             messages.error(request, "Il codice del coupon non è valido o il coupon è già stato utilizzato.")
 
         return redirect('cart')  # Reindirizza alla pagina del carrello
+
+def map_view(request):
+    fast_foods = FastFood.objects.all()  # Recupera tutti i fast food dal database
+    points = [{"lat": fast_food.latitude, "lng": fast_food.longitude, "name": fast_food.name} for fast_food in fast_foods]
+    return render(request, 'map.html', {'points': points})

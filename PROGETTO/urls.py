@@ -36,6 +36,7 @@ urlpatterns = [
     path('coupon/', views.coupon_page, name='coupon_page'),
     path('reveal_coupon/<int:coupon_id>/', views.reveal_coupon, name='reveal_coupon'),  # Aggiungi questa linea
     path('apply_coupon/', views.apply_coupon, name='apply_coupon'),
+    path('map/', views.map_view, name='map'),  # Aggiungi questa linea
 ]
 
 

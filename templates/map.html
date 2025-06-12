@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Mappa</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff8e1;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #ff9800; /* Arancione */
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0;
+            display: flex;
+            justify-content: center;
+        }
+        nav ul li {
+            margin: 0 15px;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+        #map {
+            height: 600px;
+            width: 100%;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Mappa dei Fast Food</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'homepage' %}">Homepage</a></li>
+                <li><a href="{% url 'prodotti' %}">Menu</a></li>
+                <li>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'orders' %}">I tuoi Ordini</a>
+                    {% else %}
+                        <a href="{% url 'login' %}">Ordini (Login richiesto)</a>
+                    {% endif %}
+                </li>
+                <li><a href="{% url 'coupon_page' %}">Offerte</a></li>
+                <li><a href="{% url 'map' %}">Mappa</a></li>
+                <li><a href="{% url 'ristoratore_login' %}">Area Ristoratore</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+        // Inizializza la mappa
+        var map = L.map('map').setView([41.9028, 12.4964], 13); // Coordinate iniziali (Roma)
+
+        // Aggiungi un layer di base
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Aggiungi punti di interesse
+        var points = {{ points|safe }};
+        points.forEach(function(point) {
+            L.marker([point.lat, point.lng]).addTo(map)
+                .bindPopup(point.name)
+                .openPopup();
+        });
+    </script>
+</body>
+</html>
