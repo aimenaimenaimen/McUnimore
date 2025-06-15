@@ -1,28 +1,37 @@
-from django.test import TestCase
-from django.contrib.auth.models import User
+from django.test import TestCase, Client
+from django.contrib.auth import get_user_model
+from .models import FastFood
 
-class SimpleTestCase(TestCase):
-    def test_homepage(self):
-        response = self.client.get('/')
-        self.assertEqual(response.status_code, 200)
+User = get_user_model()
 
-    def test_404_page(self):
-        response = self.client.get('/nonexistent-page/')
-        self.assertEqual(response.status_code, 404)
+class SiteTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        FastFood.objects.create(nome='McTest', indirizzo='Via Test 1', latitudine=45.0, longitudine=9.0)
 
-    def test_coupon_page(self):
-        # Assumendo che tu abbia una pagina "about" configurata
-        response = self.client.get('/register/')
-        self.assertEqual(response.status_code, 200)
+    def test_register(self):
+        response = self.client.post('/register/', {
+            'username': 'newuser',
+            'password1': 'newpass123',
+            'password2': 'newpass123'
+        })
+        self.assertEqual(response.status_code, 302)  # Redirect dopo registrazione
+        self.assertTrue(User.objects.filter(username='newuser').exists())
 
     def test_login(self):
-        # Creazione di un utente di test
-        user = User.objects.create_user(username='testuser', password='testpassword')
-        
-        # Effettua il login
-        login = self.client.login(username='testuser', password='testpassword')
-        self.assertTrue(login)
+        response = self.client.post('/login/', {
+            'username': 'testuser',
+            'password': 'testpass'
+        })
+        self.assertEqual(response.status_code, 302)  # Redirect dopo login
 
-        # Verifica che l'utente sia autenticato accedendo a una pagina protetta
-        response = self.client.get('/protected-page/')  # Sostituisci con l'URL di una pagina protetta
+    def test_homepage_access(self):
+        response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Fast Food")  # Modifica secondo il contenuto reale
+
+    def test_fastfood_on_map(self):
+        response = self.client.get('/mappa/')  # Modifica secondo la tua url
+        self.assertContains(response, 'McTest')
+        self.assertContains(response, 'Via Test 1')

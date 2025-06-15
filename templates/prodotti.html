@@ -19,7 +19,7 @@
 <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px;">
     {% for product in products %}
         <div style="border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); width: 250px; padding: 20px; background-color: #fff3e0; text-align: center;">
-            <img src="{% static 'images/' %}{{ product.image_name }}" alt="{{ product.name }}" style="width: 100%; border-radius: 10px; margin-bottom: 10px;">
+        
             <h2 style="color: #ff9800;">{{ product.name }}</h2>
             <p style="font-size: 1.2em; font-weight: bold;">€{{ product.price }}</p>
             <a href="{% url 'add_to_cart' product.id %}" style="background-color: #ff9800; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px; text-decoration: none;">Aggiungi al Carrello</a>
