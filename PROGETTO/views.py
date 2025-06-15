@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from gestione.models import Product, Cart, CartItem
 from gestione.models import User, Order, FastFood, Coupon  # Usa un'importazione assoluta
+
 import pytz
 import random
 import string
@@ -27,7 +28,7 @@ def register(request):
         user.save()
 
         # Crea un carrello per il nuovo utente
-        Cart.objects.create(user=user)
+        Cart.objects.get_or_create(user=user)
 
         # Autentica e logga l'utente
         user = authenticate(request, username=username, password=password)
