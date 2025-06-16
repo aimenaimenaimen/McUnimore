@@ -13,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from gestione.models import Coupon
+import json
 
 def homepage(request):
     return render(request, 'homepage.html')
@@ -238,14 +239,11 @@ def reveal_coupon(request, coupon_id):
 @receiver(post_save, sender=User)
 def generate_coupons_and_cart_for_user(sender, instance, created, **kwargs):
     if created:  # Esegui solo quando l'utente viene creato
-        # Genera i coupon
-        num_coupons = random.randint(3, 5)  # Genera un numero casuale di coupon (tra 3 e 5)
-        for _ in range(num_coupons):
+        # Genera sempre 5 coupon
+        for _ in range(5):
             code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))  # Codice casuale
             discount = random.randint(5, 12)  # Sconto casuale tra il 5% e il 12%
             description = f"Coupon con {discount}% di sconto"
-            
-            # Crea il coupon e associarlo all'utente
             Coupon.objects.create(
                 user=instance,
                 code=code,
@@ -253,7 +251,6 @@ def generate_coupons_and_cart_for_user(sender, instance, created, **kwargs):
                 description=description,
                 is_active=True
             )
-        
         # Crea un carrello per il nuovo utente
         Cart.objects.create(user=instance)
 
@@ -279,6 +276,14 @@ def apply_coupon(request):
         return redirect('cart')  # Reindirizza alla pagina del carrello
 
 def map_view(request):
-    fast_foods = FastFood.objects.all()  # Recupera tutti i fast food dal database
-    points = [{"lat": fast_food.latitude, "lng": fast_food.longitude, "name": fast_food.name} for fast_food in fast_foods]
-    return render(request, 'map.html', {'points': points})
+    fast_foods = FastFood.objects.all()
+    points = [
+        {
+            "lat": fast_food.latitudine,
+            "lng": fast_food.longitudine,
+            "name": fast_food.nome,
+            "address": fast_food.indirizzo
+        }
+        for fast_food in fast_foods
+    ]
+    return render(request, 'map.html', {'points': json.dumps(points), 'fast_foods': fast_foods})

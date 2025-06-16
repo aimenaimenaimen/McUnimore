@@ -24,7 +24,7 @@ class Product(models.Model):
         return self.name
 
 class Coupon(models.Model):
-    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='owned_coupons')  # Cambia il related_name
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='owned_coupons', null=True, blank=True)
     code = models.CharField(max_length=50, unique=True)  # Codice univoco del coupon
     discount = models.IntegerField()  # Percentuale di sconto
     description = models.CharField(max_length=255)  # Descrizione del coupon
@@ -57,13 +57,13 @@ class CartItem(models.Model):
         return f"{self.quantity} x {self.product.name} nel carrello di {self.cart.user.username}"
 
 class FastFood(models.Model):
-    name = models.CharField(max_length=255)  # Nome del fast food
-    address = models.CharField(max_length=255)  # Indirizzo del fast food
-    latitude = models.FloatField()  # Latitudine
-    longitude = models.FloatField()  # Longitudine
+    nome = models.CharField(max_length=100)
+    indirizzo = models.CharField(max_length=255)
+    latitudine = models.FloatField()
+    longitudine = models.FloatField()
 
     def __str__(self):
-        return self.name
+        return self.nome
     
 class Order(models.Model):
     STATUS_CHOICES = [
