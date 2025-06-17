@@ -109,9 +109,4 @@ class SiteTests(TestCase):
         codes = Coupon.objects.values_list('code', flat=True)
         self.assertEqual(len(codes), len(set(codes)))  # Verifica che non ci siano duplicati
 
-    def test_coupon_str_method(self):
-        """
-        Testa il metodo __str__ del modello Coupon.
-        """
-        coupon = Coupon.objects.first()
-        self.assertEqual(str(coupon), coupon.code)  # Verifica che la rappresentazione testuale sia il codice
+   

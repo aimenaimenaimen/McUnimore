@@ -4,8 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from gestione.models import Product, Cart, CartItem
-from gestione.models import User, Order, FastFood, Coupon  # Usa un'importazione assoluta
-
+from gestione.models import User, Order, FastFood, Coupon 
 import pytz
 import random
 import string
