@@ -47,7 +47,7 @@
             Prezzo Totale: €{{ total_price }}
         </div>
 
-        <form method="post" style="margin: 20px auto; padding: 20px; background-color: #fff3e0; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+        <form method="post" action="{% url 'create_order' %}" style="margin: 20px auto; padding: 20px; background-color: #fff3e0; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
             {% csrf_token %}
             <h3 style="color: #ff9800;">Tipo di Ordine</h3>
             <label>
@@ -59,14 +59,14 @@
 
             <div id="delivery-fields" style="display: none; margin-top: 10px;">
                 <label>Indirizzo:</label>
-                <input type="text" name="address" placeholder="Inserisci l'indirizzo" style="width: 100%; padding: 10px; margin-top: 5px;" required>
+                <input type="text" name="address" placeholder="Inserisci l'indirizzo" style="width: 100%; padding: 10px; margin-top: 5px;">
                 <label>Città:</label>
-                <input type="text" name="city" placeholder="Inserisci la città" style="width: 100%; padding: 10px; margin-top: 5px;" required>
+                <input type="text" name="city" placeholder="Inserisci la città" style="width: 100%; padding: 10px; margin-top: 5px;">
             </div>
 
             <div id="fast-food-fields" style="display: none; margin-top: 10px;">
                 <label>Seleziona il Fast Food:</label>
-                <select name="fast_food" style="width: 100%; padding: 10px; margin-top: 5px;">
+                <select name="fast_food">
                     <option value="">-- Seleziona --</option>
                     {% for fast_food in fast_foods %}
                         <option value="{{ fast_food.id }}">{{ fast_food.name }}</option>
@@ -90,6 +90,8 @@
             Il carrello è vuoto.
         </div>
     {% endif %}
+
+
 </div>
 
 <script>

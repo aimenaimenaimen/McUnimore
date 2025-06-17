@@ -73,7 +73,7 @@
         {% for point in points|safe|json_script:"points-data" %}
         {% endfor %}
         {% for fast_food in fast_foods %}
-            <div>{{ fast_food.nome }} - {{ fast_food.indirizzo }}</div>
+            <div>{{ fast_food.name }} - {{ fast_food.address }}</div>
         {% endfor %}
     </div>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>

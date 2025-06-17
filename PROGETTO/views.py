@@ -67,57 +67,12 @@ def cart_view(request):
         discount = (total_price * cart.coupon.discount) / 100
         total_price -= discount
 
-    if request.method == 'POST':
-        order_type = request.POST.get('order_type')
-        address = request.POST.get('address')
-        city = request.POST.get('city')
-        fast_food_id = request.POST.get('fast_food')
+    fast_foods = FastFood.objects.all()  # Recupera tutti i fast food dal database
 
-        # Validazione per il tipo di ordine "Delivery"
-        if order_type == 'delivery':
-            if not address or not city:
-                messages.error(request, "Indirizzo e città sono obbligatori per la consegna.")
-                return redirect('cart')
-
-        # Validazione per il fast-food
-        if not fast_food_id:
-            messages.error(request, "Seleziona un fast-food.")
-            return redirect('cart')
-
-        fast_food = FastFood.objects.get(id=fast_food_id) if fast_food_id else None
-
-        # Creazione ordine
-        order = Order.objects.create(
-            user=request.user,
-            total_price=total_price,
-            items=", ".join([f"{item.quantity}x {item.product.name}" for item in cart_items]),
-            tipo_di_ordine=order_type,
-            fast_food=fast_food,
-            delivery_address=address if order_type == 'delivery' else None,
-            delivery_city=city if order_type == 'delivery' else None
-        )
-
-        # Svuota il carrello
-        cart_items.delete()
-        cart.total_price = 0
-
-        # Disattiva il coupon dopo l'ordine
-        if cart.coupon:
-            cart.coupon.is_active = False
-            cart.coupon.save()
-            cart.coupon = None
-
-        cart.save()
-
-        # Aggiungi un messaggio di successo
-        messages.success(request, "Ordine effettuato con successo!")
-        return redirect('cart')
-
-    fast_foods = FastFood.objects.all()
     context = {
         'cart_items': cart_items,
         'total_price': total_price,
-        'fast_foods': fast_foods,
+        'fast_foods': fast_foods,  # Passa i fast food al template
     }
     return render(request, 'cart.html', context)
 
@@ -128,7 +83,7 @@ def prodotti_view(request):
         product_id = request.POST.get('product_id')
         product = get_object_or_404(Product, id=product_id)
         cart, created = Cart.objects.get_or_create(user=request.user)
-        # Aggiungi il prodotto al carrello (puoi usare una relazione ManyToMany o un altro modello)
+        # Aggiungi il prodotto al carrello
         cart.total_price += product.price  # Aggiorna il prezzo totale
         cart.save()
         return redirect('prodotti')  # Ricarica la pagina dei prodotti
@@ -280,9 +235,60 @@ def map_view(request):
         {
             "lat": fast_food.latitudine,
             "lng": fast_food.longitudine,
-            "name": fast_food.nome,
-            "address": fast_food.indirizzo
+            "name": fast_food.name,
+            "address": fast_food.address
         }
         for fast_food in fast_foods
     ]
     return render(request, 'map.html', {'points': json.dumps(points), 'fast_foods': fast_foods})
+
+@login_required
+def create_order(request):
+    if request.method == 'POST':
+        order_type = request.POST.get('order_type')
+        address = request.POST.get('address')
+        city = request.POST.get('city')
+        fast_food_id = request.POST.get('fast_food')
+
+        # Validazione dei campi
+        if order_type == 'delivery' and (not address or not city):
+            messages.error(request, "Indirizzo e città sono obbligatori per la consegna.")
+            return redirect('cart')
+
+        if order_type == 'in_loco' and not fast_food_id:
+            messages.error(request, "Seleziona un fast food.")
+            return redirect('cart')
+
+        fast_food = FastFood.objects.get(id=fast_food_id) if fast_food_id else None
+
+        # Recupera il carrello dell'utente
+        cart = Cart.objects.get(user=request.user)
+        cart_items = CartItem.objects.filter(cart=cart)
+        total_price = sum(item.product.price * item.quantity for item in cart_items)
+
+        # Applica il coupon se presente
+        if cart.coupon:
+            discount = (total_price * cart.coupon.discount) / 100
+            total_price -= discount
+
+        # Crea l'ordine
+        order = Order.objects.create(
+            user=request.user,
+            total_price=total_price,
+            items=", ".join([f"{item.quantity}x {item.product.name}" for item in cart_items]),
+            tipo_di_ordine=order_type,
+            fast_food=fast_food,
+            delivery_address=address if order_type == 'delivery' else None,
+            delivery_city=city if order_type == 'delivery' else None
+        )
+
+        # Svuota il carrello
+        cart_items.delete()
+        cart.total_price = 0
+        cart.coupon = None
+        cart.save()
+
+        messages.success(request, "Ordine effettuato con successo!")
+        return redirect('orders')
+
+    return redirect('cart')

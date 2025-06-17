@@ -17,7 +17,7 @@ class SiteTests(TestCase):
         self.client = Client()  # Crea un client per simulare richieste HTTP
         self.user = User.objects.create_user(username='testuser', password='testpass')  # Crea un utente di test
         # Crea un fast food di test con nome, indirizzo e coordinate
-        FastFood.objects.create(nome='McTest', indirizzo='Via Test 1', latitudine=45.0, longitudine=9.0)
+        FastFood.objects.create(name='McTest', indrizzo='Via Test 1', latitudine=45.0, longitudine=9.0)
         # Crea 10 coupon senza utente associato (liberi)
         for i in range(10):
             Coupon.objects.create(
